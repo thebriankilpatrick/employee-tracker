@@ -1,26 +1,13 @@
-CREATE DATABASE employee_cms;
+-- Use this as a seed for creating rows for the tables
+-- Need to figure out joining tables
+-- AND
+-- The "_id"s from role and employee
 
-USE employee_cms;
+INSERT INTO department (name)
+VALUES (IT);
 
-CREATE TABLE department (
-    id INTEGER NOT NULL AUTO_INCREMENT,
-    name VARCHAR(30) NOT NULL,
-    PRIMARY KEY (id)
-);
+INSERT INTO role (title, salary)
+VALUES ("Software Engineer", 60,000);
 
-CREATE TABLE role (
-    id INTEGER NOT NULL AUTO_INCREMENT,
-    title VARCHAR(30) NOT NULL,
-    salary DECIMAL NOT NULL,
-    department_id INTEGER NOT NULL,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE employee (
-    id INTEGER NOT NULL AUTO_INCREMENT,
-    first_name VARCHAR(30) NOT NULL,
-    last_name VARCHAR(30) NOT NULL,
-    role_id INTEGER NOT NULL,
-    manager_id INTEGER,
-    PRIMARY KEY (id)
-);
+INSERT INTO employee (first_name, last_name)
+VALUES ("Brian", "Kilpatrick");
