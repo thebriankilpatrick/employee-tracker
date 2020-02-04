@@ -1,6 +1,6 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql");
-const cTable = require("console.table"); // Do I need this?
+const cTable = require("console.table");
 
 const connection = mysql.createConnection({
     host: "localhost",
@@ -119,14 +119,32 @@ function addDepartment() {
 
 function viewDepartments() {
     console.log("Viewing Departments");
+    // Probably need to use inquirer to view and click each option to display further info
+
+    // connection.query("SELECT __ FROM __", function(err, res) {
+    //     if (err) throw err;
+    //     console.log(res);
+    // });
 }
 
 function viewRoles() {
     console.log("Viewing Roles");
+    // Probably need to use inquirer to view and click each option to display further info
+
+    // connection.query("SELECT __ FROM __", function(err, res) {
+    //     if (err) throw err;
+    //     console.log(res);
+    // });
 }
 
 function viewEmployees() {
     console.log("Viewing Employees");
+    // Probably need to use inquirer to view and click each option to display further info
+
+    // connection.query("SELECT __ FROM __", function(err, res) {
+    //     if (err) throw err;
+    //     console.log(res);
+    // });
 }
 
 // --------------------------- Function for updating employee ------------
@@ -138,11 +156,10 @@ function updateEmployee() {
             type: "list",
             name: "chooseEmployee",
             message: "Which employee would you like to update?",
+            // Use connection.query() to select all employees from table
             choices: []
         }
     ]).then(answers => {
         console.log(answers.chooseEmployee);
     })
 }
-
-// initialPrompt();
