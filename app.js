@@ -12,7 +12,7 @@ const connection = mysql.createConnection({
   
 connection.connect(err => {
     if (err) throw err;
-    // initialPrompt()
+    initialPrompt()
 });
 
 function initialPrompt() {
@@ -77,6 +77,10 @@ function addEmployee() {
     ]).then(answers => {
         console.log(answers.firstName);
         console.log(answers.lastName);
+        // connection.query(`INSERT INTO employee (first_name, last_name) VALUES (${answers.firstName}, ${answers.lastName})`, function(err, res) {
+        //     if (err) throw err;
+        //     console.log("Employee successfully added.");
+        // });
     })
 }
 
@@ -117,49 +121,86 @@ function addDepartment() {
     })
 }
 
-function viewDepartments() {
-    console.log("Viewing Departments");
-    // Probably need to use inquirer to view and click each option to display further info
 
-    // connection.query("SELECT __ FROM __", function(err, res) {
-    //     if (err) throw err;
-    //     console.log(res);
-    // });
+function viewDepartments() {
+    // console.log("Viewing Departments");
+    
+    connection.query("SELECT * FROM department", (err, res) => {
+        if (err) throw err;
+        console.table(res); 
+        initialPrompt();
+    });
 }
 
 function viewRoles() {
     console.log("Viewing Roles");
-    // Probably need to use inquirer to view and click each option to display further info
-
-    // connection.query("SELECT __ FROM __", function(err, res) {
-    //     if (err) throw err;
-    //     console.log(res);
-    // });
+    
+    connection.query("SELECT * FROM role", (err, res) => {
+        if (err) throw err;
+        console.table(res);
+        initialPrompt();
+    })
 }
 
 function viewEmployees() {
     console.log("Viewing Employees");
-    // Probably need to use inquirer to view and click each option to display further info
-
-    // connection.query("SELECT __ FROM __", function(err, res) {
-    //     if (err) throw err;
-    //     console.log(res);
-    // });
+    
+    connection.query("SELECT * FROM employee INNER JOIN role ON role_id = role.id INNER JOIN department ON department_id = department.id", (err, res) => {
+        if (err) throw err;
+        console.table(res);
+        initialPrompt();
+    })
+    
 }
+
 
 // --------------------------- Function for updating employee ------------
 function updateEmployee() {
-    console.log("Updating Employee Roles");
-
-    inquirer.prompt([
-        {
-            type: "list",
-            name: "chooseEmployee",
-            message: "Which employee would you like to update?",
-            // Use connection.query() to select all employees from table
-            choices: []
+    connection.query("SELECT * FROM employee", (err, res) => {
+        if (err) throw err;
+        const employeeNames = [];
+        for (let i = 0; i < res.length; i++) {
+            employeeNames.push(res[i].first_name + " " + res[i].last_name);
         }
-    ]).then(answers => {
-        console.log(answers.chooseEmployee);
-    })
+        inquirer.prompt([
+            {
+                type: "list",
+                name: "chooseEmployee",
+                message: "Which employee would you like to update?",
+                choices: [...employeeNames]
+            }
+        ]).then(answers => {
+            console.log(answers.chooseEmployee);
+
+            connection.query("SELECT title FROM role", (err, result) => {
+                if (err) throw err;
+                const roleTitles = [];
+                for (let i = 0; i < result.length; i++) {
+                    roleTitles.push(result[i].title);
+                }
+                inquirer.prompt([
+                    {
+                        type: "list",
+                        name: "newRole",
+                        message: `Select ${answers.chooseEmployee}'s new role.`,
+                        choices: [...roleTitles]
+                    }
+                ]).then(answer => {
+                    console.log(answer.newRole);
+                    console.log(answers.chooseEmployee);
+                    connection.query("UPDATE employee SET ? WHERE ? AND ?", [
+                        {
+                            role: answer.newRole
+                        },
+                        {
+                            id: ________ 
+                        }
+                    ], (err, data) => {
+
+                    })
+                });
+            });
+        });
+    });
+    
 }
