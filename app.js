@@ -23,7 +23,7 @@ function initialPrompt() {
            message: "What would you like to do?",
            choices: ["Add Employee", "Add Role", "Add Department",
                 "View Departments", "View Roles", "View Employees", "Update Employee Role", 
-            "Delete Department", "Delete Role", "Delete Employee"]
+                "Delete Department", "Delete Role", "Delete Employee", "Update Employee Manager"]
         }
     ]).then(answer => {
         
@@ -66,6 +66,10 @@ function initialPrompt() {
 
             case "Delete Employee":
                 deleteEmployee();
+            break;
+
+            case "Update Employee Manager":
+                updateEmployeeManager();
             break;
         }
     })
@@ -228,7 +232,7 @@ function viewRoles() {
 function viewEmployees() {
     console.log("Viewing Employees");
     
-    connection.query("SELECT employee.id, first_name, last_name, role.title, department.name FROM employee LEFT JOIN role ON role_id = role.id LEFT JOIN department ON department_id = department.id", (err, res) => {
+    connection.query("SELECT employee.id, first_name AS 'First Name', last_name AS 'Last Name', role.title AS 'Title', department.name AS 'Dept', manager_id AS 'Manager' FROM employee LEFT JOIN role ON role_id = role.id LEFT JOIN department ON department_id = department.id", (err, res) => {
         if (err) throw err;
         console.table(res);
         initialPrompt();
