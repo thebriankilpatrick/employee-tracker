@@ -22,10 +22,10 @@ function initialPrompt() {
            name: "initQuestion",
            message: "What would you like to do?",
            choices: ["Add Employee", "Add Role", "Add Department",
-                "View Departments", "View Roles", "View Employees", "Update Employee Role"]
+                "View Departments", "View Roles", "View Employees", "Update Employee Role", 
+            "Delete Department", "Delete Role", "Delete Employee"]
         }
     ]).then(answer => {
-        console.log(answer.initQuestion);
         
         switch(answer.initQuestion) {
             case "Add Employee":
@@ -55,6 +55,18 @@ function initialPrompt() {
             case "Update Employee Role":
                 updateEmployee();
             break;
+
+            case "Delete Department":
+                deleteDepartment();
+            break;
+
+            case "Delete Role":
+                deleteRole();
+            break;
+
+            case "Delete Employee":
+                deleteEmployee();
+            break;
         }
     })
 }
@@ -74,8 +86,6 @@ function addEmployee() {
             message: "What is the employee's last name?"
         }
     ]).then(answers => {
-        console.log(answers.firstName);
-        console.log(answers.lastName);
         
         connection.query("SELECT * FROM role", (err, res) => {
             if (err) throw err;
@@ -103,8 +113,7 @@ function addEmployee() {
                         choices: [...managers]
                     }
                 ]).then(answer => {
-                    console.log(answer.empRole);
-                    console.log(answer.empMan);
+
                     let roleData = answer.empRole.split("");
                     let roleID = Number(roleData[0]);
                     if (answer.empMan === "None") {
@@ -123,7 +132,6 @@ function addEmployee() {
                             initialPrompt();
                         });
                     }
-                    console.log(answer.empMan);
                 });
             });
         });
@@ -146,8 +154,6 @@ function addRole() {
             message: "What is the role's base salary?"
         }
     ]).then(answers => {
-        // console.log(answers.roleTitle);
-        // console.log(answers.roleSalary);
 
         connection.query("SELECT * FROM department", (err, res) => {
             if (err) throw err;
@@ -163,9 +169,6 @@ function addRole() {
                     choices: [...departmentNames]
                 }
             ]).then(answer => {
-                console.log(answers.roleTitle);
-                console.log(answers.roleSalary);
-                console.log(answer.roleDepartment);
 
                 const roleData = answer.roleDepartment.split("");
                 const departmentID = Number(roleData[0]);
@@ -190,7 +193,6 @@ function addDepartment() {
             message: "What is the department's name?"
         }
     ]).then(answer => {
-        console.log(answer.departmentName);
 
         connection.query(`INSERT INTO department (name) VALUES ("${answer.departmentName}");`, (err, res) => {
             if (err) throw err;
@@ -200,9 +202,9 @@ function addDepartment() {
     });
 }
 
-
+// -------------------- FUNCTION FOR VIEWING DEPARTMENTS IN CONSOLE TABLE --------------------
 function viewDepartments() {
-    // console.log("Viewing Departments");
+    console.log("Viewing Departments");
     
     connection.query("SELECT * FROM department", (err, res) => {
         if (err) throw err;
@@ -211,24 +213,26 @@ function viewDepartments() {
     });
 }
 
+// ----------------------------- FUNCTION FOR VIEWING ROLES IN CONSOLE TABLE -------------------
 function viewRoles() {
     console.log("Viewing Roles");
     
-    connection.query("SELECT * FROM role INNER JOIN department ON department_id = department.id", (err, res) => {
+    connection.query("SELECT title, salary, department.name FROM role LEFT JOIN department ON department_id = department.id", (err, res) => {
         if (err) throw err;
         console.table(res);
         initialPrompt();
-    })
+    });
 }
 
+// -------------------------- FUNCTION FOR VIEWING EMPLOYEES IN CONSOLE TABLE ----------------
 function viewEmployees() {
     console.log("Viewing Employees");
     
-    connection.query("SELECT * FROM employee INNER JOIN role ON role_id = role.id INNER JOIN department ON department_id = department.id", (err, res) => {
+    connection.query("SELECT employee.id, first_name, last_name, role.title, department.name FROM employee LEFT JOIN role ON role_id = role.id LEFT JOIN department ON department_id = department.id", (err, res) => {
         if (err) throw err;
         console.table(res);
         initialPrompt();
-    })
+    });
     
 }
 
@@ -251,7 +255,6 @@ function updateEmployee() {
         ]).then(answers => {
             const empData = answers.chooseEmployee.split("");
             const empID = Number(empData[0]);
-            console.log(empID);
 
             connection.query("SELECT title FROM role", (err, result) => {
                 if (err) throw err;
@@ -267,11 +270,8 @@ function updateEmployee() {
                         choices: [...roleTitles]
                     }
                 ]).then(answer => {
-                    console.log(answer.newRole);
-                    console.log(answers.chooseEmployee);
                     connection.query(`SELECT id FROM role WHERE title = ("${answer.newRole}")`, (err, result2) => {
                         if (err) throw err;
-                        console.log(result2[0].id);
                         connection.query("UPDATE employee SET ? WHERE ?", [
                             {
                                 role_id: result2[0].id
@@ -288,6 +288,129 @@ function updateEmployee() {
                 });
             });
         });
+    });    
+}
+
+// ------------------------ FUNCTION FOR DELETING DEPARTMENTS ----------------------
+function deleteDepartment() {
+    connection.query("SELECT * FROM department", (err, res) => {
+        let departments = [];
+        for (let i = 0; i < res.length; i++) {
+            departments.push(res[i].id + " " + res[i].name);
+        }
+        inquirer.prompt([
+            {
+                type: "list",
+                name: "departmentName",
+                message: "Which department would you like to delete?",
+                choices: [...departments]
+            }
+        ]).then(answer => {
+            const depData = answer.departmentName.split("");
+            const depID = Number(depData[0]);
+
+            connection.query(`DELETE FROM department WHERE id = ${depID}`, (err, data) => {
+                if (err) throw err;
+                console.log("Department deleted!");
+                initialPrompt();
+            });
+        });
     });
-    
+}
+
+// ------------------------------ FUNCTION FOR DELETING ROLES -----------------------
+function deleteRole() {
+    connection.query("SELECT * FROM role", (err, res) => {
+        if (err) throw err;
+        let roles = [];
+        for (let i = 0; i < res.length; i++) {
+            roles.push(res[i].id + " " + res[i].title);
+        }
+        inquirer.prompt([
+            {
+                type: "list",
+                name: "roleName",
+                message: "Which role would you like to delete?",
+                choices: [...roles]
+            }
+        ]).then(answer => {
+            const rolData = answer.roleName.split("");
+            const rolID = Number(rolData[0]);
+
+            connection.query(`DELETE FROM role WHERE id = ${rolID}`, (err, data) => {
+                if (err) throw err;
+                console.log("Role deleted!");
+                initialPrompt();
+            });
+        });
+    });
+}
+
+// ------------------------------------ FUNCTION FOR DELETING EMPLOYEES -----------------
+function deleteEmployee() {
+    connection.query("SELECT * FROM employee", (err, res) => {
+        if (err) throw err;
+        let employees = [];
+        for (let i = 0; i < res.length; i++) {
+            employees.push(res[i].id + " " + res[i].first_name + " " + res[i].last_name);
+        }
+        inquirer.prompt([
+            {
+                type: "list",
+                name: "employeeName",
+                message: "Which employee would you like to delete?",
+                choices: [...employees]
+            }
+        ]).then(answer => {
+            const employeeData = answer.employeeName.split("");
+            const employeeID = Number(employeeData[0]);
+
+            connection.query(`DELETE FROM employee WHERE id = ${employeeID}`, (err, data) => {
+                if (err) throw err;
+                console.log("Employee deleted!");
+                initialPrompt();
+            });
+        });
+    });
+}
+
+function updateEmployeeManager() {
+    connection.query("SELECT * FROM employee", (err, res) => {
+        let employees = [];
+        for (let i = 0; i < res.length; i++) {
+            employees.push(res[i].id + " " + res[i].first_name + " " + res[i].last_name);
+        }
+        inquirer.prompt([
+            {
+                type: "list",
+                name: "employeeName",
+                message: "Which employee would you like to update the manager for?",
+                choices: [...employees]
+            },
+            {
+               type: "list",
+               name: "managerName",
+               message: "Who is the employee's new manager?",
+               choices: [...employees]
+            }
+        ]).then(answers => {
+            const employeeData = answers.employeeName.split("");
+            const employeeID = Number(employeeData[0]);
+            const managerData = answers.managerName.split("");
+            const managerID = Number(managerData[0]);
+
+            connection.query("UPDATE employee SET ? WHERE ?", [
+                {
+                    manager_id: managerID
+                },
+                {
+                    id: employeeID
+                }
+            ], (err, data) => {
+                if (err) throw err;
+                console.log("Employee's manager has been updated!");
+                initialPrompt();
+            });
+        });
+    });
 }
