@@ -103,6 +103,8 @@ function addRole() {
     ]).then(answers => {
         console.log(answers.roleTitle);
         console.log(answers.roleSalary);
+
+        
     })
 }
 
@@ -118,6 +120,11 @@ function addDepartment() {
         }
     ]).then(answer => {
         console.log(answer.departmentName);
+
+        connection.query(`INSERT INTO department (name) VALUES ("${answer.departmentName}");`, (err, res) => {
+            if (err) throw err;
+            console.log(`Successfully added the ${answer.departmentName} department!`);
+        })
     })
 }
 
@@ -135,7 +142,7 @@ function viewDepartments() {
 function viewRoles() {
     console.log("Viewing Roles");
     
-    connection.query("SELECT * FROM role", (err, res) => {
+    connection.query("SELECT * FROM role INNER JOIN department ON departmnet_id = department.id", (err, res) => {
         if (err) throw err;
         console.table(res);
         initialPrompt();
@@ -160,7 +167,7 @@ function updateEmployee() {
         if (err) throw err;
         const employeeNames = [];
         for (let i = 0; i < res.length; i++) {
-            employeeNames.push(res[i].first_name + " " + res[i].last_name);
+            employeeNames.push(res[i].id + " " + res[i].first_name + " " + res[i].last_name);
         }
         inquirer.prompt([
             {
@@ -170,7 +177,9 @@ function updateEmployee() {
                 choices: [...employeeNames]
             }
         ]).then(answers => {
-            console.log(answers.chooseEmployee);
+            const empData = answers.chooseEmployee.split("");
+            const empID = Number(empData[0]);
+            console.log(empID);
 
             connection.query("SELECT title FROM role", (err, result) => {
                 if (err) throw err;
@@ -188,16 +197,22 @@ function updateEmployee() {
                 ]).then(answer => {
                     console.log(answer.newRole);
                     console.log(answers.chooseEmployee);
-                    connection.query("UPDATE employee SET ? WHERE ? AND ?", [
-                        {
-                            role: answer.newRole
-                        },
-                        {
-                            id: ________ 
-                        }
-                    ], (err, data) => {
-
-                    })
+                    connection.query(`SELECT id FROM role WHERE title = ("${answer.newRole}")`, (err, result2) => {
+                        if (err) throw err;
+                        console.log(result2[0].id);
+                        connection.query("UPDATE employee SET ? WHERE ?", [
+                            {
+                                role_id: result2[0].id
+                            },
+                            {
+                                id: empID 
+                            }
+                        ], (err, data) => {
+                            if (err) throw err;
+                            console.log(`You have successfully updated the employee's role.`);
+                            initialPrompt();
+                        });
+                    });
                 });
             });
         });
