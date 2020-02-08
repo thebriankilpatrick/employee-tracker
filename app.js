@@ -63,7 +63,6 @@ function initialPrompt() {
 function addEmployee() {
     console.log("Adding Employee");
     inquirer.prompt([
-        // Probably need to add info about role and manager
         {
             type: "input",
             name: "firstName",
@@ -77,11 +76,58 @@ function addEmployee() {
     ]).then(answers => {
         console.log(answers.firstName);
         console.log(answers.lastName);
-        // connection.query(`INSERT INTO employee (first_name, last_name) VALUES (${answers.firstName}, ${answers.lastName})`, function(err, res) {
-        //     if (err) throw err;
-        //     console.log("Employee successfully added.");
-        // });
-    })
+        
+        connection.query("SELECT * FROM role", (err, res) => {
+            if (err) throw err;
+            let roles = [];
+            for (let i = 0; i < res.length; i++) {
+                roles.push(res[i].id + " " + res[i].title);
+            }
+            connection.query("SELECT * FROM employee", (err, result2) => {
+                let managers = [];
+                for (let i = 0; i < result2.length; i++) {
+                    managers.push(result2[i].id + " " + result2[i].first_name + " " + result2[i].last_name);
+                }
+                managers.push("None");
+                inquirer.prompt([
+                    {
+                        type: "list",
+                        name: "empRole",
+                        message: "What is this employee's role?",
+                        choices: [...roles]
+                    },
+                    {
+                        type: "list",
+                        name: "empMan",
+                        message: "Who is the employee's manager?",
+                        choices: [...managers]
+                    }
+                ]).then(answer => {
+                    console.log(answer.empRole);
+                    console.log(answer.empMan);
+                    let roleData = answer.empRole.split("");
+                    let roleID = Number(roleData[0]);
+                    if (answer.empMan === "None") {
+                        connection.query(`INSERT INTO employee (first_name, last_name, role_id) VALUES ("${answers.firstName}", "${answers.lastName}", "${roleID}")`, (err, result) => {
+                            if (err) throw err;
+                            console.log("A new employee has been successfully added.");
+                            initialPrompt();
+                        });
+                    }
+                    else {
+                        let managData = answer.empMan.split("");
+                        let managerID = Number(managData[0]);
+                        connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answers.firstName}", "${answers.lastName}", "${roleID}", "${managerID}")`, (err, result) => {
+                            if (err) throw err;
+                            console.log("A new employee has been successfully added.");
+                            initialPrompt();
+                        });
+                    }
+                    console.log(answer.empMan);
+                });
+            });
+        });
+    });
 }
 
 // ------------------------- Function for Adding Role -----------------------
@@ -89,7 +135,6 @@ function addRole() {
     console.log("Adding Role");
 
     inquirer.prompt([
-        // Probably need to add info about department
         {
             type: "input",
             name: "roleTitle",
@@ -101,11 +146,37 @@ function addRole() {
             message: "What is the role's base salary?"
         }
     ]).then(answers => {
-        console.log(answers.roleTitle);
-        console.log(answers.roleSalary);
+        // console.log(answers.roleTitle);
+        // console.log(answers.roleSalary);
 
-        
-    })
+        connection.query("SELECT * FROM department", (err, res) => {
+            if (err) throw err;
+            const departmentNames = [];
+            for (let i = 0; i < res.length; i++) {
+                departmentNames.push(res[i].id + " " + res[i].name);
+            }
+            inquirer.prompt([
+                {
+                    type: "list",
+                    name: "roleDepartment",
+                    message: "What department is this role in?",
+                    choices: [...departmentNames]
+                }
+            ]).then(answer => {
+                console.log(answers.roleTitle);
+                console.log(answers.roleSalary);
+                console.log(answer.roleDepartment);
+
+                const roleData = answer.roleDepartment.split("");
+                const departmentID = Number(roleData[0]);
+
+                connection.query(`INSERT INTO role (title, salary, department_id) VALUES ("${answers.roleTitle}", "${answers.roleSalary}", "${departmentID}")`, (err, result) => {
+                    console.log("Successfully added new role.");
+                    initialPrompt();
+                });
+            });
+        });
+    });
 }
 
 // ------------------------ Function for adding Department ------------------
@@ -124,8 +195,9 @@ function addDepartment() {
         connection.query(`INSERT INTO department (name) VALUES ("${answer.departmentName}");`, (err, res) => {
             if (err) throw err;
             console.log(`Successfully added the ${answer.departmentName} department!`);
-        })
-    })
+            initialPrompt();
+        });
+    });
 }
 
 
@@ -142,7 +214,7 @@ function viewDepartments() {
 function viewRoles() {
     console.log("Viewing Roles");
     
-    connection.query("SELECT * FROM role INNER JOIN department ON departmnet_id = department.id", (err, res) => {
+    connection.query("SELECT * FROM role INNER JOIN department ON department_id = department.id", (err, res) => {
         if (err) throw err;
         console.table(res);
         initialPrompt();
@@ -191,7 +263,7 @@ function updateEmployee() {
                     {
                         type: "list",
                         name: "newRole",
-                        message: `Select ${answers.chooseEmployee}'s new role.`,
+                        message: `Select the employee's new role.`,
                         choices: [...roleTitles]
                     }
                 ]).then(answer => {
